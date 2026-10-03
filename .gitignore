@@ -11,16 +11,20 @@ app/src/main/assets/
 *.pk3
 
 # ---------------------------------------------------------------
-# FMOD (proprietary SDK - not redistributable)
+# FMOD (proprietary SDK - not redistributable) - NEVER commit
 # ---------------------------------------------------------------
 app/libs/fmod.jar
+app/libs/*.jar
+!app/libs/.gitkeep
 app/src/main/cpp/fmod/
-app/src/main/jniLibs/**/libfmod*.so
+**/libfmod*.so
+**/fmod*.jar
 
 # ---------------------------------------------------------------
-# Prebuilt native libraries (build them yourself, see README)
+# Prebuilt native libraries in app/src/main/jniLibs/ ARE committed
+# (libGL, libSDL3, libpng16, libspirv-cross - permissive licenses).
+# Only FMOD is excluded above.
 # ---------------------------------------------------------------
-app/src/main/jniLibs/
 
 # ---------------------------------------------------------------
 # Build output
@@ -34,7 +38,6 @@ app/.cxx/
 *.aab
 *.o
 *.a
-*.so
 captures/
 .externalNativeBuild/
 
