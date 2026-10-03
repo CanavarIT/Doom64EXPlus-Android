@@ -29,7 +29,7 @@ The project is an Android Studio / Gradle project that wraps the Doom 64 EX+ eng
 1. **Engine** – the Doom 64 EX+ sources (`app/src/main/cpp/doom64ex`) are a trimmed copy of the upstream repository. Desktop-only parts (Windows / macOS / Linux packaging) were removed.
 2. **Java shell** – `org.libsdl.app.*` is the standard SDL3 Android glue. `MainActivity` extends `SDLActivity`, copies the game files from the APK assets into the app's private storage on first launch, initialises FMOD, and loads the native libraries (`GL`, `SDL3`, `fmod`, `png16`, `doom64`).
 3. **Native build** – `app/src/main/cpp/CMakeLists.txt` compiles all engine sources into `libdoom64.so` and links against prebuilt `libSDL3.so`, `libfmod.so`, `libpng16.so` and `libGL.so`. `main` is renamed to `SDL_main` so that `SDLActivity` can start it.
-4. **Graphics** – Doom 64 EX+ uses desktop OpenGL (fixed function plus GLSL 1.20 shaders). On Android it runs through **NG-GL4ES**, a gl4es fork that translates desktop GL to GLES 3. The engine was adapted to initialise gl4es (`i_gl4es_init.c`) and the shader code (`i_shaders.c/.h`) was adjusted for it.
+4. **Graphics** – Doom 64 EX+ uses desktop OpenGL (fixed function plus GLSL 1.20 shaders). On Android it runs through **[NG-GL4ES](https://github.com/Sisah2/NG-GL4ES)** (branch `Openmw2`, built in Termux), a gl4es fork that translates desktop GL to GLES 3. The engine was adapted to initialise gl4es (`i_gl4es_init.c`) and the shader code (`i_shaders.c/.h`) was adjusted for it.
 5. **Audio** – FMOD Studio, as in upstream.
 6. **Touch controls** – `TouchControlsView` is a custom `View` added on top of the SDL surface. It does not change the engine's input model: it injects Android key events and relative mouse movement through `SDLActivity.onNativeKeyDown/Up` and `onNativeMouse`. A tiny JNI bridge (`touch_jni.c`) tells Java whether the player is in a level or in a menu and lets the overlay read and change the engine's *Always Run* setting.
 7. **Development environment** – the port was developed and built entirely on an Android phone with AndroidIDE (NDK 29, CMake 3.31.6). The touch controls and several fixes were written with the help of an AI assistant (Claude by Anthropic).
@@ -53,7 +53,8 @@ app/
   src/main/
     AndroidManifest.xml
     assets/                  game data               (NOT in the repo – see below)
-    jniLibs/arm64-v8a/       prebuilt .so libraries  (NOT in the repo – see below)
+    jniLibs/arm64-v8a/       prebuilt libraries: libGL (NG-GL4ES), libSDL3, libpng16, libspirv-cross
+                             (libfmod.so is NOT in the repo – see below)
     java/
       com/doom/doom64/       MainActivity, TouchControlsView
       org/libsdl/app/        SDL3 Android glue
@@ -83,14 +84,24 @@ On first launch `MainActivity` copies them to the app's private storage.
 
 > **Please do not publish APKs that contain these files.** They are copyrighted and may not be redistributed.
 
-## Third-party binaries (not included)
+## Third-party binaries
+
+### Included (`app/src/main/jniLibs/arm64-v8a/`)
+
+| Library | File | License | Upstream |
+|---|---|---|---|
+| NG-GL4ES (gl4es fork, branch `Openmw2`, built with `-DDEFAULT_ES=3`) | `libGL.so` | MIT (as upstream [gl4es](https://github.com/ptitSeb/gl4es)) | [Sisah2/NG-GL4ES](https://github.com/Sisah2/NG-GL4ES) (branch `Openmw2`) |
+| SDL3 | `libSDL3.so` | zlib | [libsdl-org/SDL](https://github.com/libsdl-org/SDL) |
+| libpng | `libpng16.so` | libpng license | [pnggroup/libpng](https://github.com/pnggroup/libpng) |
+| SPIRV-Cross (runtime dependency of the GL layer) | `libspirv-cross-c-shared.so` | Apache-2.0 | [KhronosGroup/SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) |
+
+These are `arm64-v8a` builds. The SDL3 library must match the Java glue in `org.libsdl.app`. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for license notices.
+
+### NOT included – you must add it yourself
 
 | Library | Where to get it | Put it in |
 |---|---|---|
-| **FMOD Studio API for Android** (proprietary) | [fmod.com/download](https://www.fmod.com/download) (free account) | `fmod.jar` → `app/libs/`, `libfmod.so` → `app/src/main/jniLibs/arm64-v8a/`, headers → `app/src/main/cpp/fmod/include/` |
-| **SDL3** (`libSDL3.so`) | build from [libsdl-org/SDL](https://github.com/libsdl-org/SDL); the version must match the Java glue in `org.libsdl.app` | `app/src/main/jniLibs/arm64-v8a/` |
-| **libpng** (`libpng16.so`) | build from [pnggroup/libpng](https://github.com/pnggroup/libpng) | `app/src/main/jniLibs/arm64-v8a/` |
-| **NG-GL4ES** (`libGL.so`) | build a gl4es fork with `-DDEFAULT_ES=3`, together with its runtime dependencies (for example `libspirv-cross-c-shared.so`) | `app/src/main/jniLibs/arm64-v8a/` |
+| **FMOD Studio API for Android** (proprietary, not redistributable) | [fmod.com/download](https://www.fmod.com/download) (free account) | `fmod.jar` → `app/libs/`, `libfmod.so` → `app/src/main/jniLibs/arm64-v8a/`, headers → `app/src/main/cpp/fmod/include/` |
 
 Only `arm64-v8a` is built.
 
@@ -99,7 +110,7 @@ Only `arm64-v8a` is built.
 Requirements: Android SDK (compileSdk 36), NDK `29.0.14033849`, CMake `3.31.6`, JDK 17, Gradle 9 (wrapper included), Android Gradle Plugin 8.13.
 
 1. Clone the repository.
-2. Add the FMOD files, the prebuilt libraries and the game data as described above.
+2. Add the FMOD files and the game data as described above (the other prebuilt libraries are already in the repository).
 3. Build:
    ```bash
    ./gradlew assembleDebug
@@ -150,7 +161,7 @@ Pause → **Save Game** → pick a slot → type the name with the on-screen key
 - **Samuel "Kaiser" Villarreal** – Doom64EX
 - **atsb ("Gibbon") and contributors** – [Doom 64 EX+](https://github.com/atsb/Doom64EX-Plus)
 - **SDL** – [libsdl.org](https://libsdl.org)
-- **gl4es / NG-GL4ES** – OpenGL to OpenGL ES translation
+- **gl4es** by ptitSeb and **NG-GL4ES** by Sisah2 ([Sisah2/NG-GL4ES](https://github.com/Sisah2/NG-GL4ES), branch `Openmw2`) – OpenGL to OpenGL ES translation
 - **libpng**, **zlib**, **SPIRV-Cross**
 - **FMOD Studio by Firelight Technologies Pty Ltd.**
 
@@ -170,7 +181,7 @@ Third-party components keep their own licenses:
 | gl4es / NG-GL4ES | MIT |
 | SPIRV-Cross | Apache-2.0 |
 | OpenGL / GLES headers | MIT (Mesa / Khronos headers) |
-| FMOD Studio | proprietary, © Firelight Technologies – not included, you must obtain it under its own license |
+| FMOD Studio | proprietary, © Firelight Technologies – **not included**, you must obtain it under its own license |
 | *DOOM 64* game data | © their respective owners – not included |
 
 *DOOM*, *DOOM 64* and related names are trademarks of their respective owners.
