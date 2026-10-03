@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------
+# Copyrighted game data (DOOM 64 remaster) - NEVER commit
+# ---------------------------------------------------------------
+app/src/main/assets/
+*.wad
+*.WAD
+*.kpf
+*.dls
+*.DLS
+*.sf2
+*.pk3
+
+# ---------------------------------------------------------------
+# FMOD (proprietary SDK - not redistributable)
+# ---------------------------------------------------------------
+app/libs/fmod.jar
+app/src/main/cpp/fmod/
+app/src/main/jniLibs/**/libfmod*.so
+
+# ---------------------------------------------------------------
+# Prebuilt native libraries (build them yourself, see README)
+# ---------------------------------------------------------------
+app/src/main/jniLibs/
+
+# ---------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------
+build/
+app/build/
+.gradle/
+.cxx/
+app/.cxx/
+*.apk
+*.aab
+*.o
+*.a
+*.so
+captures/
+.externalNativeBuild/
+
+# ---------------------------------------------------------------
+# IDE / local files
+# ---------------------------------------------------------------
+.acside/
+.idea/
+*.iml
+local.properties
+.DS_Store
+
+# ---------------------------------------------------------------
+# Signing keys and secrets
+# ---------------------------------------------------------------
+*.jks
+*.keystore
+keystore.properties
+
+# ---------------------------------------------------------------
+# Backups and leftovers
+# ---------------------------------------------------------------
+*.bak
+*.bak[0-9]
+*.orig
+*.rej
+Doom64_backup_*.zip
+*.zip
+
+# ---------------------------------------------------------------
+# Windows-only files from the upstream engine repo
+# ---------------------------------------------------------------
+*.dll
+*.lib
+*.exe
+app/src/main/cpp/doom64ex/Windows/
+app/src/main/cpp/doom64ex/thirdparty/
